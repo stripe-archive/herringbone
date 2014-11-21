@@ -1,0 +1,10 @@
+target/
+data/
+.idea/
+*.pyc
+*.iml
+# ignore ROC plots
+*.pdf
+.tddium*
+
+.DS_Store

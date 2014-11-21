@@ -1,0 +1,72 @@
+#!/usr/bin/env ruby
+
+usage = <<-USAGE
+Herringbone is a suite of tools for working with parquet files on hdfs.
+
+The available commands are:
+
+flatten: Transform a directory of parquet files with a nested structure into a directory of parquet files with a flat schema that can be loaded into impala or hive
+
+load: Load a directory of parquet files (which must have a flat schema) into impala or hive (defaults to impala)
+
+tsv: Transform a directory of parquet files into a directory of tsv files (which you can concat properly later with `hadoop fs -getmerge /path/to/tsvs`)
+
+compact: Transform a directory of parquet files into a directory of fewer larger parquet files
+
+
+Example usage:
+
+`herringbone flatten -i /path/to/input/directory -o /path/to/output/directory`
+
+`herringbone load [--hive] [-u] -d db_name -t table -p /path/to/parquet/directory`
+
+`herringbone tsv -i /path/to/input/directory -o /path/to/output/directory`
+
+`herringbone compact -i /path/to/input/directory -o /path/to/output/directory`
+
+
+See 'herringbone COMMAND --help' for more information on a specific command.
+
+
+  USAGE
+
+command_jobs = {
+  'compact' => 'CompactJob',
+  'load' => 'ParquetLoad',
+  'flatten' => 'FlattenJob',
+  'tsv' => 'TsvJob',
+}
+
+# Validate the given command and print usage if needed.
+command = ARGV.shift
+JOB = command_jobs[command]
+
+if ['-h', '--help'].include?(command)
+  puts usage
+  exit 0
+elsif !JOB
+  STDERR.puts "\nError: #{command} is not an available command\n\n"
+  puts "#{'=' * 30}\n\n"
+  puts usage
+  exit 1
+end
+
+jar_path = File.join(
+  File.dirname(__FILE__),
+  '../',
+  'herringbone-main',
+  'target',
+  'herringbone-0.0.1-jar-with-dependencies.jar'
+)
+JAR = File.expand_path(jar_path)
+
+ENV["HADOOP_CLASSPATH"] = JAR
+ENV["HADOOP_USER_CLASSPATH_FIRST"] = "true"
+
+exec(
+  "hadoop",
+  "jar",
+  JAR,
+  "com.stripe.herringbone.#{JOB}",
+  *ARGV
+)
