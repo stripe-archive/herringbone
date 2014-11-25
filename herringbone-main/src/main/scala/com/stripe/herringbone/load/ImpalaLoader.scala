@@ -46,7 +46,7 @@ case class ImpalaLoader(conf: ParquetLoadConf,
     execute("CREATE DATABASE IF NOT EXISTS %s".format(database))
     execute("DROP TABLE IF EXISTS %s.%s".format(database, table))
     execute("ALTER TABLE importing.%s RENAME TO %s.%s".format(table, database, table))
-    if (partitionFields.isEmpty) execute("COMPUTE STATS %s.%s".format(database, table))
+    if (partitionFields.isEmpty && conf.computeStats()) execute("COMPUTE STATS %s.%s".format(database, table))
   }
 
   def updateTable(table: String, database: String) {

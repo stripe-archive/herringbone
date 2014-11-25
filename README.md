@@ -9,9 +9,9 @@ The available commands are:
 
     $ herringbone flatten -i /path/to/input/directory -o /path/to/output/directory
 
-`load`: load a directory of parquet files (which must have a flat schema) into impala or hive (defaulting to impala)
+`load`: load a directory of parquet files (which must have a flat schema) into impala or hive (defaulting to impala). Use the --nocompute-stats option for faster loading into impala (but probably slower querying later on!)
 
-    $ herringbone load [--hive] [-u] -d db_name -t table -p /path/to/parquet/directory
+    $ herringbone load [--hive] [-u] [--nocompute-stats] -d db_name -t table -p /path/to/parquet/directory
 
 `tsv`: transform a directory of parquet files into a directory of tsv files (which you can concat properly later with `hadoop fs -getmerge /path/to/tsvs`)
 

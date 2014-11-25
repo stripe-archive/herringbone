@@ -11,6 +11,7 @@ import scala.collection.JavaConversions._
 
 case class Connection(host: String, port: Int) {
   var isOpen = false
+  val logContext = "herringbone-impala"
   lazy val socket = new TSocket(host, port)
   lazy val client = new ClouderaImpalaClient(new TBinaryProtocol(socket))
 
@@ -54,7 +55,7 @@ case class Connection(host: String, port: Int) {
     val query = new Query
     query.query = raw
 
-    val handle = client.query(query)
+    val handle = client.executeAndWait(query, logContext)
     Cursor(handle, client)
   }
 
