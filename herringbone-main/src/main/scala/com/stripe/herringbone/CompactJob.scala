@@ -70,6 +70,11 @@ class CompactJob extends Configured with Tool {
     val metadataJson = new ObjectMapper().writeValueAsString(metadata)
     getConf.set(ParquetCompactWriteSupport.ExtraMetadataKey, metadataJson)
 
+    if (fs.exists(outputPath)) {
+      println(s"Deleting existing $outputPath")
+      fs.delete(outputPath, true)
+    }
+
     val job = new Job(getConf)
 
     FileInputFormat.setInputPaths(job, inputPath)
