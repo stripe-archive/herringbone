@@ -37,39 +37,12 @@ import org.rogach.scallop.ScallopConf
 
 import parquet.example.data.{Group,GroupWriter}
 import parquet.hadoop.{BadConfigurationException,ParquetOutputFormat}
-import parquet.hadoop.api.{DelegatingWriteSupport,WriteSupport}
-import parquet.hadoop.api.WriteSupport.FinalizedWriteContext
+import parquet.hadoop.api.WriteSupport
 import parquet.hadoop.example.GroupWriteSupport
 
 class ParquetCompactConf(arguments: Seq[String]) extends ScallopConf(arguments) {
   val inputPath = opt[String](required = true)
   val outputPath = opt[String](required = true)
-}
-
-class ParquetCompactWriteSupport extends DelegatingWriteSupport[Group](new GroupWriteSupport) {
-  var extraMetadata: java.util.Map[String, String] = _
-
-  override def init(configuration: Configuration): WriteSupport.WriteContext = {
-    extractMetadata(configuration)
-    super.init(configuration)
-  }
-
-  override def finalizeWrite(): FinalizedWriteContext = {
-    new FinalizedWriteContext(extraMetadata)
-  }
-
-  def extractMetadata(configuration: Configuration) = {
-    val metadataJson = configuration.get(ParquetCompactWriteSupport.ExtraMetadataKey)
-    try {
-      extraMetadata = new ObjectMapper().readValue(metadataJson, new TypeReference[java.util.Map[String,String]](){})
-    } catch { case e: java.io.IOException =>
-      throw new BadConfigurationException("Unable to deserialize extra extra metadata: " + metadataJson, e)
-    }
-  }
-}
-
-object ParquetCompactWriteSupport {
-  val ExtraMetadataKey = "herringbone.compact.extrametadata"
 }
 
 class CompactJob extends Configured with Tool {
@@ -78,11 +51,6 @@ class CompactJob extends Configured with Tool {
     val fs = FileSystem.get(getConf)
     val inputPath = new Path(args.inputPath())
     val outputPath = new Path(args.outputPath())
-
-    // Pass along metadata (which includes the thrift schema) to the results.
-    val metadata = ParquetUtils.readKeyValueMetaData(inputPath, fs)
-    val metadataJson = new ObjectMapper().writeValueAsString(metadata)
-    getConf.set(ParquetCompactWriteSupport.ExtraMetadataKey, metadataJson)
 
     if (fs.exists(outputPath)) {
       println(s"Deleting existing $outputPath")
@@ -93,7 +61,7 @@ class CompactJob extends Configured with Tool {
 
     FileInputFormat.setInputPaths(job, inputPath)
     FileOutputFormat.setOutputPath(job, outputPath)
-    ParquetOutputFormat.setWriteSupportClass(job, classOf[ParquetCompactWriteSupport])
+    ParquetOutputFormat.setWriteSupportClass(job, classOf[GroupWriteSupport])
     GroupWriteSupport.setSchema(ParquetUtils.readSchema(inputPath, fs), job.getConfiguration)
 
     job.setJobName("compact " + args.inputPath() + " → " + args.outputPath())
