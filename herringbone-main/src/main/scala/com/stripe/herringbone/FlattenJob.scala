@@ -64,6 +64,7 @@ class FlattenJob extends Configured with Tool {
     job.setMapperClass(classOf[FlattenMapper])
     job.setJarByClass(classOf[FlattenJob])
     job.getConfiguration.set("mapreduce.job.user.classpath.first", "true")
+    job.getConfiguration.set(ParquetOutputFormat.ENABLE_JOB_SUMMARY, "false")
     job.setNumReduceTasks(0)
 
     if (job.waitForCompletion(true)) 0 else 1
