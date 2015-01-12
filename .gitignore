@@ -1,10 +1,9 @@
-target/
-data/
-.idea/
-*.pyc
-*.iml
-# ignore ROC plots
-*.pdf
-.tddium*
-
 .DS_Store
+build.sbt
+parquetjoiner.sublime-project
+parquetjoiner.sublime-workspace
+project/project/
+project/target/
+src/.DS_Store
+src/main/.DS_Store
+target/
