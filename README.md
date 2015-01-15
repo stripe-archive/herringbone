@@ -7,4 +7,4 @@ Our cutdown version of Herringbone only has support for compacting parquet files
 
 You can use herringbone by running:
 
-    $ herringbone compact -i /path/to/input/directory -o /path/to/output/directory
+    $ hadoop jar herringbone-assembly-0.0.1.jar -i /path/to/input/directory -o /path/to/output/directory
