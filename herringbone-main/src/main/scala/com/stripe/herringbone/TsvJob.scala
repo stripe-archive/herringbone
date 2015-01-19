@@ -27,7 +27,7 @@ import scala.collection.JavaConversions._
 
 class TsvMapper extends ParquetFlatMapper[Text] {
   def valueOut(value: Group) = {
-    val tsvLine = FlatConverter.groupToTSV(value, flattenedSchema, separator, renameId) + "\n"
+    val tsvLine = FlatConverter.groupToTSV(value, flattenedSchema, separator, renameId)
     new Text(tsvLine)
   }
 }
