@@ -29,7 +29,7 @@ import parquet.hadoop.example.GroupWriteSupport
 
 class ParquetCompactConf(arguments: Seq[String]) extends ScallopConf(arguments) {
   val inputPath = opt[String](required = true)
-  val outputPath = opt[String](required = true)
+  val outputPath = opt[String](descr = "Default is input path with `-compact` appended")
 }
 
 class ParquetCompactWriteSupport extends DelegatingWriteSupport[Group](new GroupWriteSupport) {
@@ -60,10 +60,11 @@ object ParquetCompactWriteSupport {
 
 class CompactJob extends Configured with Tool {
   override def run(arguments: Array[String]) = {
-    val args = new ParquetCompactConf(arguments)
+    val conf = new ParquetCompactConf(arguments)
     val fs = FileSystem.get(getConf)
-    val inputPath = new Path(args.inputPath())
-    val outputPath = new Path(args.outputPath())
+    val inputPath = new Path(conf.inputPath())
+    val outputPathString = conf.outputPath.get.getOrElse(conf.inputPath().stripSuffix("/").concat("-compact"))
+    val outputPath = new Path(outputPathString)
 
     // Pass along metadata (which includes the thrift schema) to the results.
     val metadata = ParquetUtils.readKeyValueMetaData(inputPath, fs)
@@ -82,7 +83,7 @@ class CompactJob extends Configured with Tool {
     ParquetOutputFormat.setWriteSupportClass(job, classOf[ParquetCompactWriteSupport])
     GroupWriteSupport.setSchema(ParquetUtils.readSchema(inputPath, fs), job.getConfiguration)
 
-    job.setJobName("compact " + args.inputPath() + " → " + args.outputPath())
+    job.setJobName("compact " + conf.inputPath() + " → " + outputPathString)
     job.setInputFormatClass(classOf[CompactGroupInputFormat]);
     job.setOutputFormatClass(classOf[ParquetOutputFormat[Group]])
     job.setMapperClass(classOf[Mapper[Void,Group,Void,Group]])

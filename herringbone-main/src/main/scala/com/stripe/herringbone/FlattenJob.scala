@@ -31,7 +31,8 @@ class FlattenJob extends Configured with Tool {
     val conf = new ParquetFlatConf(args)
     val fs = FileSystem.get(getConf)
     val inputPath = new Path(conf.inputPath())
-    val outputPath = new Path(conf.outputPath())
+    val outputPathString = conf.outputPath.get.getOrElse(conf.inputPath().stripSuffix("/").concat("-flat"))
+    val outputPath = new Path(outputPathString)
     val previousPath = conf.previousPath.get.map{new Path(_)}
 
     val separator = conf.separator()
@@ -52,7 +53,7 @@ class FlattenJob extends Configured with Tool {
       renameId
     )
 
-    val jobName = "flatten " + conf.inputPath() + " -> " + conf.outputPath()
+    val jobName = "flatten " + conf.inputPath() + " -> " + outputPathString
     val job = new Job(getConf, jobName)
 
     FileInputFormat.setInputPaths(job, inputPath)
