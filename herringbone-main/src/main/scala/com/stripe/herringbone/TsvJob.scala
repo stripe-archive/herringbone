@@ -37,7 +37,8 @@ class TsvJob extends Configured with Tool {
     val conf = new ParquetFlatConf(args)
     val fs = FileSystem.get(getConf)
     val inputPath = new Path(conf.inputPath())
-    val outputPath = new Path(conf.outputPath())
+    val outputPathString = conf.outputPath.get.getOrElse(conf.inputPath().stripSuffix("/").concat("-tsv"))
+    val outputPath = new Path(outputPathString)
     val previousPath = conf.previousPath.get.map{new Path(_)}
 
     val separator = conf.separator()
@@ -58,7 +59,7 @@ class TsvJob extends Configured with Tool {
       renameId
     )
 
-    val jobName = "tsv " + conf.inputPath() + " -> " + conf.outputPath()
+    val jobName = "tsv " + conf.inputPath() + " -> " + outputPathString
     val job = new Job(getConf, jobName)
 
     FileInputFormat.setInputPaths(job, inputPath)
@@ -73,7 +74,7 @@ class TsvJob extends Configured with Tool {
     job.setNumReduceTasks(0)
 
     if (job.waitForCompletion(true)) {
-      val headerPath = new Path(conf.outputPath() + "/_header.tsv")
+      val headerPath = new Path(outputPathString + "/_header.tsv")
       writeHeader(fs, headerPath, flattenedSchema)
       0
     } else {
