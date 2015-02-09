@@ -5,7 +5,7 @@ Herringbone is a suite of tools for working with parquet files on hdfs, and with
 
 The available commands are:
 
-`flatten`: transform a directory of parquet files with a nested structure into a directory of parquet files with a flat schema that can be loaded into impala or hive (neither of which support nested schemas)
+`flatten`: transform a directory of parquet files with a nested structure into a directory of parquet files with a flat schema that can be loaded into impala or hive (neither of which support nested schemas). Default output directory is `/path/to/input/directory-flat`.
 
     $ herringbone flatten -i /path/to/input/directory [-o /path/to/non/default/output/directory]
 
@@ -13,11 +13,11 @@ The available commands are:
 
     $ herringbone load [--hive] [-u] [--nocompute-stats] -d db_name -t table -p /path/to/parquet/directory
 
-`tsv`: transform a directory of parquet files into a directory of tsv files (which you can concat properly later with `hadoop fs -getmerge /path/to/tsvs`)
+`tsv`: transform a directory of parquet files into a directory of tsv files (which you can concat properly later with `hadoop fs -getmerge /path/to/tsvs`). Default output directory is `/path/to/input/directory-tsv`.
 
     $ herringbone tsv -i /path/to/input/directory [-o /path/to/non/default/output/directory]
 
-`compact`: transform a directory of parquet files into a directory of fewer larger parquet files
+`compact`: transform a directory of parquet files into a directory of fewer larger parquet files. Default output directory is `/path/to/input/directory-compact`.
 
     $ herringbone compact -i /path/to/input/directory [-o /path/to/non/default/output/directory]
 
