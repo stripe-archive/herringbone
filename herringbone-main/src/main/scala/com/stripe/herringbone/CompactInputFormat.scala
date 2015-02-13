@@ -27,11 +27,11 @@ class CompactInputFormat[T](readSupportClass: Class[_ <: ReadSupport[T]]) extend
   val TARGET = 1024 * 1024 * 900 // 900MB.
 
   override def getSplits(context: JobContext): JavaList[InputSplit] = {
-    // Limit the splits to 20MB so it's easy to assemble them into 900MB chunks.
-    // This is not actually reliable. Chunks can come back bigger than 20MB, but
-    // it does limit the size of most chunks.
+    // Limit the splits to 100MB so it's easy to assemble them into 900MB
+    // chunks.  This is not actually reliable. Chunks can come back bigger than
+    // 100MB, but it does limit the size of most chunks.
     val conf = ContextUtil.getConfiguration(context)
-    conf.set("mapred.max.split.size", (20 * 1024 * 1024).toString)
+    conf.set("mapred.max.split.size", (100 * 1024 * 1024).toString)
 
     val splits = super.getSplits(conf, getFooters(context)).asScala.toList
     val m = if (splits.isEmpty) splits else mergeSplits(splits)
