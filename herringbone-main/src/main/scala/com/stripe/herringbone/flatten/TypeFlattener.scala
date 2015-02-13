@@ -54,6 +54,6 @@ object TypeFlattener {
   def isRepeated(t: Type) = t.isRepetition(Type.Repetition.REPEATED)
 
   def omitIdField(fieldName: String, numberOfFields: Integer, renameId: Boolean) = {
-    renameId && Seq("id", "_id").contains(fieldName) && numberOfFields > 1
+    renameId && numberOfFields > 1 && (fieldName == "id" || fieldName == "_id")
   }
 }
