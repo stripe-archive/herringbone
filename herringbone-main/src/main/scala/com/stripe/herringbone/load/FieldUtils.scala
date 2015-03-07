@@ -21,7 +21,7 @@ case class FieldUtils(hadoopFs: HadoopFs, schemaTypeMapper: SchemaTypeMapper) {
   }
 
   def findTableFields(path: Path) = {
-    val schema = ParquetUtils.readSchema(path, hadoopFs.fileSystem)
+    val schema = ParquetUtils.readSchema(path)
     tableFieldsFromSchemaFields(schema.getFields)
   }
 

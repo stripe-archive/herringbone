@@ -7,21 +7,20 @@ import org.apache.hadoop.fs._
 import org.apache.hadoop.util._
 
 class HadoopFs {
-  lazy val fileSystem = FileSystem.get(new Configuration)
-
   def findAbsolutePath(path: Path) = {
-    fileSystem.getFileStatus(path).getPath.toUri.toString
+    path.getFileSystem(new Configuration).getFileStatus(path).getPath.toUri.toString
   }
 
   def findSortedLeafPaths(path: Path): List[Path] =
     findLeafPaths(path).sortBy{case (path,time) => time}.map{_._1}
 
   def findLeafPaths(path: Path): List[(Path,Long)] = {
-    val parquetFileStatuses = fileSystem.listStatus(path, ParquetUtils.parquetFilter)
+    val fs = path.getFileSystem(new Configuration)
+    val parquetFileStatuses = fs.listStatus(path, ParquetUtils.parquetFilter)
     if (parquetFileStatuses.size > 0)
       List((path, parquetFileStatuses.head.getModificationTime))
     else {
-      fileSystem.listStatus(path, ParquetUtils.partitionFilter)
+      fs.listStatus(path, ParquetUtils.partitionFilter)
         .toList
         .map{_.getPath}
         .flatMap{findLeafPaths(_)}
