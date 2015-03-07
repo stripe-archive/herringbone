@@ -10,7 +10,7 @@ class HadoopFs {
   lazy val fileSystem = FileSystem.get(new Configuration)
 
   def findAbsolutePath(path: Path) = {
-    fileSystem.getFileStatus(path).getPath.toUri.getPath
+    fileSystem.getFileStatus(path).getPath.toUri.toString
   }
 
   def findSortedLeafPaths(path: Path): List[Path] =
