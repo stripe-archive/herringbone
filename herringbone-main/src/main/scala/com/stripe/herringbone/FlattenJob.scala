@@ -47,8 +47,8 @@ class FlattenJob extends Configured with Tool {
     }
 
     val flattenedSchema = TypeFlattener.flatten(
-      ParquetUtils.readSchema(inputPath, fs),
-      previousPath.map { ParquetUtils.readSchema(_, fs) },
+      ParquetUtils.readSchema(inputPath),
+      previousPath.map { ParquetUtils.readSchema(_) },
       separator,
       renameId
     )

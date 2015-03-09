@@ -61,13 +61,13 @@ object ParquetCompactWriteSupport {
 class CompactJob extends Configured with Tool {
   override def run(arguments: Array[String]) = {
     val conf = new ParquetCompactConf(arguments)
-    val fs = FileSystem.get(getConf)
     val inputPath = new Path(conf.inputPath())
+    val fs = inputPath.getFileSystem(getConf)
     val outputPathString = conf.outputPath.get.getOrElse(conf.inputPath().stripSuffix("/").concat("-compact"))
     val outputPath = new Path(outputPathString)
 
     // Pass along metadata (which includes the thrift schema) to the results.
-    val metadata = ParquetUtils.readKeyValueMetaData(inputPath, fs)
+    val metadata = ParquetUtils.readKeyValueMetaData(inputPath)
     val metadataJson = new ObjectMapper().writeValueAsString(metadata)
     getConf.set(ParquetCompactWriteSupport.ExtraMetadataKey, metadataJson)
 
@@ -81,7 +81,7 @@ class CompactJob extends Configured with Tool {
     FileInputFormat.setInputPaths(job, inputPath)
     FileOutputFormat.setOutputPath(job, outputPath)
     ParquetOutputFormat.setWriteSupportClass(job, classOf[ParquetCompactWriteSupport])
-    GroupWriteSupport.setSchema(ParquetUtils.readSchema(inputPath, fs), job.getConfiguration)
+    GroupWriteSupport.setSchema(ParquetUtils.readSchema(inputPath), job.getConfiguration)
 
     job.setJobName("compact " + conf.inputPath() + " → " + outputPathString)
     job.setInputFormatClass(classOf[CompactGroupInputFormat]);
