@@ -15,7 +15,7 @@ case class HiveLoader(conf: ParquetLoadConf,
   val connection = HiveServer2Connection(conf.connectionUrl() + ":" + conf.connectionPort())
 
   def checkTableExists(table: String, database: String): Boolean = {
-    connection.execute("USE %s".format(database))
+    useDatabase(database)
     var exists: Boolean = false
     connection.executeQuery("SHOW TABLES") { resultSet =>
       val existingTable = resultSet.getString(1).trim
@@ -37,8 +37,7 @@ case class HiveLoader(conf: ParquetLoadConf,
     val partitionFields = fieldUtils.findPartitionFields(leafPaths.last)
     val tableWhileImporting = table + "__import"
 
-    connection.execute("CREATE DATABASE IF NOT EXISTS %s".format(database))
-    connection.execute("USE %s".format(database))
+    useDatabase(database)
 
     createTableWithPartitionFields(location, tableWhileImporting, tableFields, partitionFields)
 
@@ -73,4 +72,9 @@ case class HiveLoader(conf: ParquetLoadConf,
   }
 
   def closeConnection() = connection.close
+
+  private def useDatabase(database: String) = {
+    connection.execute("CREATE DATABASE IF NOT EXISTS %s".format(database))
+    connection.execute("USE %s".format(database))
+  }
 }

@@ -14,7 +14,7 @@ case class ImpalaLoader(conf: ParquetLoadConf,
     conf.connectionPort().toInt)
 
   def checkTableExists(table: String, database: String): Boolean = {
-    execute("USE %s".format(database))
+    useDatabase(database)
     var exists: Boolean = false
     query("SHOW TABLES"){row =>
       row.foreach { value =>
@@ -35,22 +35,21 @@ case class ImpalaLoader(conf: ParquetLoadConf,
     val tableFields = fieldUtils.findTableFields(leafPaths.last)
     val partitionFields = fieldUtils.findPartitionFields(leafPaths.last)
 
-    execute("CREATE DATABASE IF NOT EXISTS importing")
-    execute("USE importing")
+    useDatabase("importing")
 
     createTableWithPartitionFields(location, table, tableFields, partitionFields)
 
     if(partitionFields.size > 0)
       addPartitions(table, leafPaths.map{hadoopFs.findPartitions(_)})
 
-    execute("CREATE DATABASE IF NOT EXISTS %s".format(database))
+    useDatabase(database)
     execute("DROP TABLE IF EXISTS %s.%s".format(database, table))
     execute("ALTER TABLE importing.%s RENAME TO %s.%s".format(table, database, table))
     if (partitionFields.isEmpty && conf.computeStats()) execute("COMPUTE STATS %s.%s".format(database, table))
   }
 
   def updateTable(table: String, database: String) {
-    execute("USE %s".format(database))
+    useDatabase(database)
 
     val basePath = findBasePath(table)
     val tablePartitions = findTablePartitions(table)
@@ -110,6 +109,13 @@ case class ImpalaLoader(conf: ParquetLoadConf,
     execute("ALTER TABLE %s ADD IF NOT EXISTS PARTITION (%s)".format(table, partitionClause))
   }
 
+  def closeConnection() = {}
+
+  private def useDatabase(database: String) = {
+    execute("CREATE DATABASE IF NOT EXISTS %s".format(database))
+    execute("USE %s".format(database))
+  }
+
   private def execute(stmt: String) {
     impalaClient.execute(stmt)
   }
@@ -117,6 +123,4 @@ case class ImpalaLoader(conf: ParquetLoadConf,
   private def query(stmt: String)(fn: Seq[ImpalaValue] => Unit) {
     impalaClient.query(stmt){ r =>  fn(r) }
   }
-
-  def closeConnection() = {}
 }
