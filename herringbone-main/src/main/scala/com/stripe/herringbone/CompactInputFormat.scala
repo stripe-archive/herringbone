@@ -66,7 +66,7 @@ class CompactInputFormat[T](readSupportClass: Class[_ <: ReadSupport[T]]) extend
   }
 
   override def createRecordReader(split: InputSplit, context: TaskAttemptContext): MergedRecordReader[T] = {
-    val readSupport = getReadSupport(ContextUtil.getConfiguration(context))
+    val readSupport = ParquetInputFormat.getReadSupportInstance[T](ContextUtil.getConfiguration(context))
     split match {
       case s: MergedInputSplit => new MergedRecordReader[T](s, context, readSupport)
       case _ => throw new Exception(s"Expected a MergedInputSplit. Found a $split.")
