@@ -22,10 +22,10 @@ import org.codehaus.jackson.`type`.TypeReference
 import org.rogach.scallop.ScallopConf
 
 import parquet.example.data.{Group,GroupWriter}
-import parquet.hadoop.{BadConfigurationException,ParquetOutputFormat}
+import parquet.hadoop.{BadConfigurationException,ParquetInputFormat,ParquetOutputFormat}
 import parquet.hadoop.api.{DelegatingWriteSupport,WriteSupport}
 import parquet.hadoop.api.WriteSupport.FinalizedWriteContext
-import parquet.hadoop.example.GroupWriteSupport
+import parquet.hadoop.example.{GroupReadSupport,GroupWriteSupport}
 
 class ParquetCompactConf(arguments: Seq[String]) extends ScallopConf(arguments) {
   val inputPath = opt[String](required = true)
@@ -80,6 +80,7 @@ class CompactJob extends Configured with Tool {
 
     FileInputFormat.setInputPaths(job, inputPath)
     FileOutputFormat.setOutputPath(job, outputPath)
+    ParquetInputFormat.setReadSupportClass(job, classOf[GroupReadSupport])
     ParquetOutputFormat.setWriteSupportClass(job, classOf[ParquetCompactWriteSupport])
     GroupWriteSupport.setSchema(ParquetUtils.readSchema(inputPath), job.getConfiguration)
 
@@ -88,8 +89,9 @@ class CompactJob extends Configured with Tool {
     job.setOutputFormatClass(classOf[ParquetOutputFormat[Group]])
     job.setMapperClass(classOf[Mapper[Void,Group,Void,Group]])
     job.setJarByClass(classOf[CompactJob])
-    job.getConfiguration.set("mapreduce.job.user.classpath.first", "true")
-    job.getConfiguration.set(ParquetOutputFormat.ENABLE_JOB_SUMMARY, "false")
+    job.getConfiguration.setBoolean("mapreduce.job.user.classpath.first", true)
+    job.getConfiguration.setBoolean(ParquetOutputFormat.ENABLE_JOB_SUMMARY, false)
+    job.getConfiguration.setBoolean(ParquetInputFormat.TASK_SIDE_METADATA, false);
     job.setNumReduceTasks(0)
 
     if(job.waitForCompletion(true)) 0 else 1

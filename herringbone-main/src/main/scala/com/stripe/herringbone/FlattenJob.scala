@@ -59,13 +59,15 @@ class FlattenJob extends Configured with Tool {
     FileInputFormat.setInputPaths(job, inputPath)
     FileOutputFormat.setOutputPath(job, outputPath)
     ExampleOutputFormat.setSchema(job, flattenedSchema)
+    ParquetInputFormat.setReadSupportClass(job, classOf[GroupReadSupport])
 
     job.setInputFormatClass(classOf[CompactGroupInputFormat]);
     job.setOutputFormatClass(classOf[ExampleOutputFormat])
     job.setMapperClass(classOf[FlattenMapper])
     job.setJarByClass(classOf[FlattenJob])
-    job.getConfiguration.set("mapreduce.job.user.classpath.first", "true")
-    job.getConfiguration.set(ParquetOutputFormat.ENABLE_JOB_SUMMARY, "false")
+    job.getConfiguration.setBoolean("mapreduce.job.user.classpath.first", true)
+    job.getConfiguration.setBoolean(ParquetOutputFormat.ENABLE_JOB_SUMMARY, false)
+    job.getConfiguration.setBoolean(ParquetInputFormat.TASK_SIDE_METADATA, false);
     job.setNumReduceTasks(0)
 
     if (job.waitForCompletion(true)) 0 else 1
