@@ -64,6 +64,7 @@ class TsvJob extends Configured with Tool {
 
     FileInputFormat.setInputPaths(job, inputPath)
     FileOutputFormat.setOutputPath(job, outputPath)
+    ParquetInputFormat.setReadSupportClass(job, classOf[GroupReadSupport])
     ExampleOutputFormat.setSchema(job, flattenedSchema)
 
     job.setInputFormatClass(classOf[CompactGroupInputFormat])
@@ -71,6 +72,7 @@ class TsvJob extends Configured with Tool {
     job.setMapperClass(classOf[TsvMapper])
     job.setJarByClass(classOf[TsvJob])
     job.getConfiguration.set("mapreduce.job.user.classpath.first", "true")
+    job.getConfiguration.setBoolean(ParquetInputFormat.TASK_SIDE_METADATA, false)
     job.setNumReduceTasks(0)
 
     if (job.waitForCompletion(true)) {

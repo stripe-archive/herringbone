@@ -22,12 +22,11 @@ import parquet.example.data.simple.SimpleGroup
 
 class CompactInputFormat[T](readSupportClass: Class[_ <: ReadSupport[T]]) extends ParquetInputFormat[T](readSupportClass) {
 
-  // We can't accurately predict the size of the resulting merged file, so aim
-  // for 900MB. Our HDFS block size is 1024MB so we'll get pretty close.
-  val TARGET = 1024 * 1024 * 900 // 900MB.
+  // Our HDFS block size is 1024MB so we'll get pretty close.
+  val TARGET = 1024 * 1024 * 1024 // 1024MB.
 
   override def getSplits(context: JobContext): JavaList[InputSplit] = {
-    // Limit the splits to 100MB so it's easy to assemble them into 900MB
+    // Limit the splits to 100MB so it's easy to assemble them into 1024MB
     // chunks.  This is not actually reliable. Chunks can come back bigger than
     // 100MB, but it does limit the size of most chunks.
     val conf = ContextUtil.getConfiguration(context)
