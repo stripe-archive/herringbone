@@ -14,7 +14,7 @@
 
 package au.com.cba.omnia.herringbone
 
-import au.com.cba.omnia.herringbone.util.ParquetUtils
+import com.stripe.herringbone.util.ParquetUtils
 
 import java.util.{List => JavaList}
 import java.io.DataOutput
@@ -36,21 +36,54 @@ import org.codehaus.jackson.`type`.TypeReference
 import org.rogach.scallop.ScallopConf
 
 import parquet.example.data.{Group,GroupWriter}
-import parquet.hadoop.{BadConfigurationException,ParquetOutputFormat}
-import parquet.hadoop.api.WriteSupport
-import parquet.hadoop.example.GroupWriteSupport
+import parquet.hadoop.{BadConfigurationException,ParquetInputFormat,ParquetOutputFormat}
+import parquet.hadoop.api.{DelegatingWriteSupport,WriteSupport}
+import parquet.hadoop.api.WriteSupport.FinalizedWriteContext
+import parquet.hadoop.example.{GroupReadSupport,GroupWriteSupport}
 
 class ParquetCompactConf(arguments: Seq[String]) extends ScallopConf(arguments) {
   val inputPath = opt[String](required = true)
-  val outputPath = opt[String](required = true)
+  val outputPath = opt[String](descr = "Default is input path with `-compact` appended")
+}
+
+class ParquetCompactWriteSupport extends DelegatingWriteSupport[Group](new GroupWriteSupport) {
+  var extraMetadata: java.util.Map[String, String] = _
+
+  override def init(configuration: Configuration): WriteSupport.WriteContext = {
+    extractMetadata(configuration)
+    super.init(configuration)
+  }
+
+  override def finalizeWrite(): FinalizedWriteContext = {
+    new FinalizedWriteContext(extraMetadata)
+  }
+
+  def extractMetadata(configuration: Configuration) = {
+    val metadataJson = configuration.get(ParquetCompactWriteSupport.ExtraMetadataKey)
+    try {
+      extraMetadata = new ObjectMapper().readValue(metadataJson, new TypeReference[java.util.Map[String,String]](){})
+    } catch { case e: java.io.IOException =>
+      throw new BadConfigurationException("Unable to deserialize extra extra metadata: " + metadataJson, e)
+    }
+  }
+}
+
+object ParquetCompactWriteSupport {
+  val ExtraMetadataKey = "herringbone.compact.extrametadata"
 }
 
 class CompactJob extends Configured with Tool {
   override def run(arguments: Array[String]) = {
-    val args = new ParquetCompactConf(arguments)
-    val fs = FileSystem.get(getConf)
-    val inputPath = new Path(args.inputPath())
-    val outputPath = new Path(args.outputPath())
+    val conf = new ParquetCompactConf(arguments)
+    val inputPath = new Path(conf.inputPath())
+    val fs = inputPath.getFileSystem(getConf)
+    val outputPathString = conf.outputPath.get.getOrElse(conf.inputPath().stripSuffix("/").concat("-compact"))
+    val outputPath = new Path(outputPathString)
+
+    // Pass along metadata (which includes the thrift schema) to the results.
+    val metadata = ParquetUtils.readKeyValueMetaData(inputPath)
+    val metadataJson = new ObjectMapper().writeValueAsString(metadata)
+    getConf.set(ParquetCompactWriteSupport.ExtraMetadataKey, metadataJson)
 
     if (fs.exists(outputPath)) {
       println(s"Deleting existing $outputPath")
@@ -61,15 +94,18 @@ class CompactJob extends Configured with Tool {
 
     FileInputFormat.setInputPaths(job, inputPath)
     FileOutputFormat.setOutputPath(job, outputPath)
-    ParquetOutputFormat.setWriteSupportClass(job, classOf[GroupWriteSupport])
-    GroupWriteSupport.setSchema(ParquetUtils.readSchema(inputPath, fs), job.getConfiguration)
+    ParquetInputFormat.setReadSupportClass(job, classOf[GroupReadSupport])
+    ParquetOutputFormat.setWriteSupportClass(job, classOf[ParquetCompactWriteSupport])
+    GroupWriteSupport.setSchema(ParquetUtils.readSchema(inputPath), job.getConfiguration)
 
-    job.setJobName("compact " + args.inputPath() + " → " + args.outputPath())
+    job.setJobName("compact " + conf.inputPath() + " → " + outputPathString)
     job.setInputFormatClass(classOf[CompactGroupInputFormat]);
     job.setOutputFormatClass(classOf[ParquetOutputFormat[Group]])
     job.setMapperClass(classOf[Mapper[Void,Group,Void,Group]])
     job.setJarByClass(classOf[CompactJob])
-    job.getConfiguration.set("mapreduce.job.user.classpath.first", "true")
+    job.getConfiguration.setBoolean("mapreduce.job.user.classpath.first", true)
+    job.getConfiguration.setBoolean(ParquetOutputFormat.ENABLE_JOB_SUMMARY, false)
+    job.getConfiguration.setBoolean(ParquetInputFormat.TASK_SIDE_METADATA, false);
     job.setNumReduceTasks(0)
 
     if(job.waitForCompletion(true)) 0 else 1

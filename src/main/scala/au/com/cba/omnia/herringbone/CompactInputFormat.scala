@@ -36,16 +36,15 @@ import parquet.example.data.simple.SimpleGroup
 
 class CompactInputFormat[T](readSupportClass: Class[_ <: ReadSupport[T]]) extends ParquetInputFormat[T](readSupportClass) {
 
-  // We can't accurately predict the size of the resulting merged file, so aim
-  // for 900MB. Our HDFS block size is 1024MB so we'll get pretty close.
-  val TARGET = 1024 * 1024 * 900 // 900MB.
+  // Our HDFS block size is 1024MB so we'll get pretty close.
+  val TARGET = 1024 * 1024 * 1024 // 1024MB.
 
   override def getSplits(context: JobContext): JavaList[InputSplit] = {
-    // Limit the splits to 20MB so it's easy to assemble them into 900MB chunks.
-    // This is not actually reliable. Chunks can come back bigger than 20MB, but
-    // it does limit the size of most chunks.
+    // Limit the splits to 100MB so it's easy to assemble them into 1024MB
+    // chunks.  This is not actually reliable. Chunks can come back bigger than
+    // 100MB, but it does limit the size of most chunks.
     val conf = ContextUtil.getConfiguration(context)
-    conf.set("mapred.max.split.size", (20 * 1024 * 1024).toString)
+    conf.set("mapred.max.split.size", (100 * 1024 * 1024).toString)
 
     val splits = super.getSplits(conf, getFooters(context)).asScala.toList
     val m = if (splits.isEmpty) splits else mergeSplits(splits)
@@ -80,7 +79,7 @@ class CompactInputFormat[T](readSupportClass: Class[_ <: ReadSupport[T]]) extend
   }
 
   override def createRecordReader(split: InputSplit, context: TaskAttemptContext): MergedRecordReader[T] = {
-    val readSupport = getReadSupport(ContextUtil.getConfiguration(context))
+    val readSupport = ParquetInputFormat.getReadSupportInstance[T](ContextUtil.getConfiguration(context))
     split match {
       case s: MergedInputSplit => new MergedRecordReader[T](s, context, readSupport)
       case _ => throw new Exception(s"Expected a MergedInputSplit. Found a $split.")
