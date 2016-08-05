@@ -21,11 +21,14 @@ uniformAssemblySettings
 uniform.ghsettings
 
 libraryDependencies ++= Seq(
-  "com.twitter"       % "parquet-common"   % "1.2.5-cdh4.6.0-p485" % "provided",
-  "com.twitter"       % "parquet-encoding" % "1.2.5-cdh4.6.0-p485" % "provided",
-  "com.twitter"       % "parquet-column"   % "1.2.5-cdh4.6.0-p485" % "provided",
-  "com.twitter"       % "parquet-hadoop"   % "1.2.5-cdh4.6.0-p485" % "provided",
-  "org.apache.hadoop" % "hadoop-client"    % "2.0.0-mr1-cdh4.6.0"  % "provided",
-  "org.apache.hadoop" % "hadoop-core"      % "2.0.0-mr1-cdh4.6.0"  % "provided",
+  "com.twitter"       % "parquet-common"   % "1.6.0rc7",
+  "com.twitter"       % "parquet-encoding" % "1.6.0rc7",
+  "com.twitter"       % "parquet-column"   % "1.6.0rc7",
+  "com.twitter"       % "parquet-hadoop"   % "1.6.0rc7",
+  "org.apache.hadoop" % "hadoop-client"    % "2.0.0-mr1-cdh4.6.0",
+  "org.apache.hadoop" % "hadoop-core"      % "2.0.0-mr1-cdh4.6.0",
   "org.rogach"       %% "scallop"          % "0.9.5"
 )
+
+assemblyShadeRules in assembly := Seq(
+  ShadeRule.rename("parquet.**" -> "future.parquet.@1").inAll)

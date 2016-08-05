@@ -7,3 +7,4 @@ addSbtPlugin("au.com.cba.omnia" % "uniform-core" % uniformVersion)
 addSbtPlugin("au.com.cba.omnia" % "uniform-dependency" % uniformVersion)
 
 addSbtPlugin("au.com.cba.omnia" % "uniform-assembly"   % uniformVersion)
+
