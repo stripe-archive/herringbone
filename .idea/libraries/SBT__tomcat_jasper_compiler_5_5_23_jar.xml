@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="SBT: tomcat:jasper-compiler:5.5.23:jar">
-    <CLASSES>
-      <root url="jar://$USER_HOME$/.ivy2/cache/tomcat/jasper-compiler/jars/jasper-compiler-5.5.23.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
