@@ -1,4 +1,4 @@
-package com.stripe.herringbone
+package au.com.cba.omnia.herringbone
 
 import java.util.{List => JavaList}
 import java.io.DataOutput

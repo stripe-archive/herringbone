@@ -1,4 +1,4 @@
-package com.stripe.herringbone.util
+package au.com.cba.omnia.herringbone.util
 
 import org.apache.hadoop.conf._
 import org.apache.hadoop.util._

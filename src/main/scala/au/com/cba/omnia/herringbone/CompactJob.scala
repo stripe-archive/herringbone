@@ -1,6 +1,6 @@
-package com.stripe.herringbone
+package au.com.cba.omnia.herringbone
 
-import com.stripe.herringbone.util.ParquetUtils
+import au.com.cba.omnia.herringbone.util.ParquetUtils
 
 import java.util.{List => JavaList}
 import java.io.DataOutput
