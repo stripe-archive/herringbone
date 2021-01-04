@@ -1,6 +1,8 @@
 Herringbone
 ===========
 
+> _**Herringbone is deprecated and is no longer being actively maintained.**_
+
 Herringbone is a suite of tools for working with parquet files on hdfs, and with impala and hive.
 
 The available commands are:
